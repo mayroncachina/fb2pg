@@ -32,12 +32,14 @@ Pré-requisitos: Python 3.6+ e arquivo .sql exportado do Firebird.
 python fb2pg.py origem.sql [opções]
 ```
 Opções:
-
-| Opção | Descrição | Padrão |
-| -o / --output | Arquivo de saída | {input}.pg.sql |
-| --computed | generated | generated/comment |
-| --domains | keep/replace | keep |
-| --verbose | Logs de depuração | false |
+```
+|     Opção     |     Descrição        |      Padrão       |
+|---------------|----------------------|-------------------|
+| -o / --output | Arquivo de saída     | {input}.pg.sql    |
+| --computed    | generated            | generated/comment |
+| --domains     | keep/replace         | keep              |
+| --verbose     | Logs de depuração    | false             |
+```
 
 Exemplos:
 ```
@@ -75,9 +77,7 @@ TOTAL NUMERIC(10,2) GENERATED ALWAYS AS (PRECO * QTD) STORED
 TOTAL NUMERIC(10,2) /* TODO: Firebird COMPUTED BY (PRECO * QTD) - revisar */
 ```
 
-## ⚡ Autoincrement por Trigger
-```sql
-## � Estrutura do Projeto
+## Estrutura do Projeto
 ```
 fb2pg/
 ├── fb2pg.py
