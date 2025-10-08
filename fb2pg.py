@@ -452,6 +452,34 @@ def strip_misc(sql: str) -> str:
     t = re.sub(r"\n{3,}", "\n\n", t)
     return t
 
+def fix_orphan_block_comments(sql: str) -> str:
+    """Remove linhas contendo apenas '*/' que não possuem abertura correspondente.
+
+    Causa provável: algum passo de substituição removeu a linha de abertura '/* ...' de um
+    bloco de comentário, deixando o fechamento isolado e causando erro de sintaxe no PostgreSQL.
+    Em vez de tentar reconstruir o bloco perdido (informação não disponível), apenas removemos
+    o fechamento órfão para gerar um script válido.
+    """
+    lines = sql.splitlines()
+    open_count = 0
+    out = []
+    for line in lines:
+        stripped = line.strip()
+        # Contagem aproximada de aberturas/fechamentos existentes na linha
+        # Ignora casos com citações complexas (não necessário para DDL típico)
+        opens = line.count("/*")
+        closes = line.count("*/")
+        # Se linha possui apenas '*/' (talvez com espaços) e não há bloco aberto, descartar
+        if opens == 0 and closes == 1 and stripped == "*/" and open_count == 0:
+            # descarta linha órfã
+            continue
+        out.append(line)
+        # Atualiza contagem após processar (para não confundir linha isolada)
+        open_count += opens - closes
+        if open_count < 0:  # segurança: nunca negativo
+            open_count = 0
+    return "\n".join(out)
+
 def apply_identity_alterations(sql: str, autoinc_list: List[Tuple[str,str,str]], verbose: bool) -> str:
     if not autoinc_list:
         return sql
@@ -497,6 +525,9 @@ def convert(sql: str, computed_strategy: str, domain_strategy: str, verbose: boo
     
     # Append identity alterations
     t = apply_identity_alterations(t, autoinc, verbose)
+
+    # Corrigir possíveis '*/' órfãos que causem erro de sintaxe
+    t = fix_orphan_block_comments(t)
     
     return t
 
